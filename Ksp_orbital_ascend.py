@@ -216,11 +216,54 @@ while checker == True:
 
     # Get Vessel Roll
     Vessel_Roll = vessel.flight().roll
+
+    # Get the current velocity of the vessel as a tuple
+    current_velocity_tuple = vessel.flight().velocity
+        
+    # Calculate the magnitude of the velocity vector
+    current_velocity = math.sqrt(current_velocity_tuple[0]**2 + current_velocity_tuple[1]**2 + current_velocity_tuple[2]**2)
+
+    # Calculate Distance From center of body
+    Distance = height + Radius
+
+    # Calculate Gravitational froce
+    G = mu / Distance ** 2
     
     # Vessel Heading
     Vessel_Heading = vessel.flight().heading
-    
+
+
     elapsed_time = current_time - start_time
+
+    # Calculating the Acceleration of rocket
+    Acceleration_Squared = thrust - drag - (mass * G)
+    Acceleration_Squared = Acceleration_Squared / mass
+
+    if Acceleration_Squared < 0:
+        Acceleration_Squared = 1
+
+    Acceleration = math.sqrt(Acceleration_Squared)
+                
+    # Caulating the Time to Reach Height Threshold
+    Time_Squared = (0.5 * height_threshold_1) / Acceleration
+    if Time_Squared < 0:
+        print(f"Time squared to threshold is negative: {Time_Squared:.2e}")
+        Time_Squared = float('inf')
+    else:
+        Time = math.sqrt(Time_Squared)
+
+    Distance_To_threshold = height_threshold_1 - height
+
+    Time_to_height = 2 * Distance_To_threshold  / Acceleration_Squared
+
+    Time_to_height = math.sqrt(max (Time_to_height, 0))
+
+    # Calculating Target Degree for 10000M
+    Target_degree = calculate_target_degree(height, height_threshold_1, Degree_Target_for_10000m)
+
+    # Calculating the Velocity at Height Threshold
+    Velocity = current_velocity + (Acceleration_Squared * Time)
+
     # Calculate the pitch difference
     Yaw_Difference = Vessel_yaw - Target_degree
 
