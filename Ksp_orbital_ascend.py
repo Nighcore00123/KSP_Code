@@ -34,7 +34,12 @@ def Rate_of_Change_Pitch(Current_Heading, Previous_heading, elapsed_time):
     Degrees_Per_Second = Distance / elapsed_time
     return Degrees_Per_Second
 
-
+def RORC(Roll_Difference, Roll_Rate_Of_Change):
+    if(0.0000 < Roll_Difference and Roll_Rate_Of_Change > 0.00001):
+        vessel.control.roll = 0
+    if(Roll_Rate_Of_Change < -0.00001):
+        vessel.control.roll = 0
+        
 
 # function to calculate degree per second For Yaw
 def Rate_of_Change_Yaw(Current_Heading, Previous_heading):
@@ -64,14 +69,14 @@ def Phase_One_Positive_Yaw (Yaw_Difference):
 def Positive_Pitch(Heading_Difference, Heading_Rate_Of_Change):
         
     if (Heading_Difference < 0.0000 and Heading_Rate_Of_Change > -0.001):
-        Soothing_rate = 0.0025
+        Soothing_rate = 0.0050
         Exponential_Rate = 2
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.pitch = Pitch_Command # positive pitch for negative Heading difference
 
     elif (Heading_Difference <= -0.00005 and Heading_Rate_Of_Change <= -0.05):
-        Soothing_rate = 0.0050
+        Soothing_rate = 0.0075
         Exponential_Rate = 2
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
@@ -106,7 +111,10 @@ def Negative_Roll (Roll_Difference, Roll_Rate_Of_Change):
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.roll = -Roll_Command
         if(Roll_Rate_Of_Change > 0.0005): {
-            
+            RORC(Heading_Difference, Roll_Rate_Of_Change)
+        }
+        elif( Roll_Rate_Of_Change < -0.0005): {
+            RORC(Heading_Difference, Roll_Rate_Of_Change)
         }
 
     elif (0.0005 <= Roll_Difference and 0.0005 < Roll_Rate_Of_Change < 0.001):
@@ -295,10 +303,10 @@ while checker == True:
                 
 
             if(vessel.flight().pitch < 89):
-                #if (Heading_Difference < 0.00):
-                    #Positive_Pitch(Heading_Difference, Degrees_per_second_pitch)
-                #elif (0.00 < Heading_Difference):
-                    #Negative_Pitch(Heading_Difference, Degrees_per_second_pitch)
+                if (Heading_Difference < 0.00):
+                    Positive_Pitch(Heading_Difference, Degrees_per_second_pitch)
+                elif (0.00 < Heading_Difference):
+                    Negative_Pitch(Heading_Difference, Degrees_per_second_pitch)
                     
                 if (Roll_Difference < 0.000):
                     Positive_Roll(Roll_Difference, degrees_per_Seconds_Roll)
