@@ -24,22 +24,15 @@ def smooth_transition(current_height, threshold_1, threshold_2, degree_1, degree
     
 # function to calculate degree per second For Roll
 def Rate_of_Change_Roll(Current_Heading, Previous_heading, elapsed_time):
-    Distance = Previous_heading - Current_Heading
-    Degrees_Per_Second = Distance / elapsed_time
+    Distance = Current_Heading - Previous_heading
+    Degrees_Per_Second = abs(Distance / elapsed_time)
     return Degrees_Per_Second
 
 # function to calculate degree per second For Pitch
 def Rate_of_Change_Pitch(Current_Heading, Previous_heading, elapsed_time):
     Distance = Previous_heading - Current_Heading
-    Degrees_Per_Second = Distance / elapsed_time
+    Degrees_Per_Second = abs(Distance / elapsed_time)
     return Degrees_Per_Second
-
-def RORC(Roll_Difference, Roll_Rate_Of_Change):
-    if(0.0000 < Roll_Difference and Roll_Rate_Of_Change > 0.00001):
-        vessel.control.roll = 0
-    if(Roll_Rate_Of_Change < -0.00001):
-        vessel.control.roll = 0
-        
 
 # function to calculate degree per second For Yaw
 def Rate_of_Change_Yaw(Current_Heading, Previous_heading):
@@ -68,57 +61,47 @@ def Phase_One_Positive_Yaw (Yaw_Difference):
 
 def Positive_Pitch(Heading_Difference, Heading_Rate_Of_Change):
         
-    if (Heading_Difference < 0.0000 and Heading_Rate_Of_Change > -0.001):
+    if (Heading_Difference < 0.0000):
         Soothing_rate = 0.0050
         Exponential_Rate = 2
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.pitch = Pitch_Command # positive pitch for negative Heading difference
 
-    elif (Heading_Difference <= -0.00005 and Heading_Rate_Of_Change <= -0.05):
+    elif (Heading_Difference <= -0.00005):
         Soothing_rate = 0.0075
         Exponential_Rate = 2
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.pitch = Pitch_Command # positive pitch for negative Heading difference
-        if(Heading_Rate_Of_Change > 0.005):
-            vessel.control.pitch = -0.005
         
 def Negative_Pitch(Heading_Difference, Heading_Rate_Of_Change):
 
-    if (0.00000 < Heading_Difference < 0.00005 and Heading_Rate_Of_Change < 0.001):
+    if (0.00000 < Heading_Difference < 0.00005):
         Soothing_rate = 0.001
         Exponential_Rate = 2
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.pitch = -Pitch_Command # negative pitch for positive Heading difference
 
-    elif (0.0005 <= Heading_Difference and Heading_Rate_Of_Change < 0.05):
+    elif (0.0005 <= Heading_Difference):
         Soothing_rate = 0.0125
         Exponential_Rate = 2
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.pitch = -Pitch_Command  # negative pitch for positive Heading difference
-        if(Heading_Rate_Of_Change < -0.005):
-            vessel.control.pitch = 0.005
 
 def Negative_Roll (Roll_Difference, Roll_Rate_Of_Change):
 
-    if (0.0000 < Roll_Difference < 0.0005 and Roll_Rate_Of_Change < 0.0005):
-        Soothing_rate = 0.00125
+    if (0.0000 < Roll_Difference < 0.0005):
+        Soothing_rate = 0.000050
         Exponential_Rate = 2.5
         Roll_Command = Soothing_rate * (abs(Roll_Difference) ** Exponential_Rate)
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.roll = -Roll_Command
-        if(Roll_Rate_Of_Change > 0.0005): {
-            RORC(Heading_Difference, Roll_Rate_Of_Change)
-        }
-        elif( Roll_Rate_Of_Change < -0.0005): {
-            RORC(Heading_Difference, Roll_Rate_Of_Change)
-        }
 
-    elif (0.0005 <= Roll_Difference and 0.0005 < Roll_Rate_Of_Change < 0.001):
-        Soothing_rate = 0.00145
+    elif (0.0010 <= Roll_Difference):
+        Soothing_rate = 0.000125
         Exponential_Rate = 2.5
         Roll_Command = Soothing_rate * (abs(Roll_Difference) ** Exponential_Rate)
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
@@ -127,15 +110,15 @@ def Negative_Roll (Roll_Difference, Roll_Rate_Of_Change):
 def Positive_Roll(Roll_Difference, Roll_Rate_Of_Change):
 
     if (Roll_Difference < 0.0000):
-        Soothing_rate = 0.00150
-        Exponential_Rate = 2
+        Soothing_rate = 0.000050
+        Exponential_Rate = 2.5
         Roll_Command = Soothing_rate * (abs(Roll_Difference) ** Exponential_Rate)
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.roll = Roll_Command
     
-    elif (-0.0010 < Roll_Difference < -0.0005):
-        Soothing_rate = 0.00175
-        Exponential_Rate = 2
+    elif (-0.0010 < Roll_Difference):
+        Soothing_rate = 0.000125
+        Exponential_Rate = 2.5
         Roll_Command = Soothing_rate * (abs(Roll_Difference) ** Exponential_Rate)
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.roll = +Roll_Command
