@@ -38,7 +38,7 @@ def Rate_of_Change_Pitch(Current_Heading, Previous_heading, elapsed_time):
 def Rate_of_Change_Yaw(Current_Heading, Previous_heading):
     Distance = Previous_heading - Current_Heading
     Time = 0.5
-    Degrees_Per_Second = Distance / Time
+    Degrees_Per_Second = abs(Distance / Time)
     return Degrees_Per_Second
 
 def Phase_one_Negative_Yaw(Yaw_Difference):
@@ -95,33 +95,45 @@ def Negative_Roll (Roll_Difference, Roll_Rate_Of_Change):
 
     if (0.0000 < Roll_Difference < 0.0005):
         Soothing_rate = 0.000050
-        Exponential_Rate = 2.5
+        Exponential_Rate = 2
         Roll_Command = Soothing_rate * (abs(Roll_Difference) ** Exponential_Rate)
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.roll = -Roll_Command
 
     elif (0.0010 <= Roll_Difference):
         Soothing_rate = 0.000125
-        Exponential_Rate = 2.5
+        Exponential_Rate = 2
         Roll_Command = Soothing_rate * (abs(Roll_Difference) ** Exponential_Rate)
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.roll = -Roll_Command
+        
+    elif(Rate_of_Change_Roll > 0.0008):
+        Rate_of_Change_Roll_Difference = Degree_per_second_Target- Rate_of_Change_Roll 
+        Soothing_rate = 0.000050
+        Exponential_Rate = 2
+        Roll_Command = Soothing_rate * (abs(Rate_of_Change_Roll_Difference) ** Exponential_Rate)
+        Roll_Command = max(-1, min(1, Rate_of_Change_Roll_Difference))
+        vessel.control.roll = Roll_Command
+        
+    if(Rate_of_Change_Roll > 0.0001):
+        ROCR_Negative(Roll_Rate_Of_Change);
 
 def Positive_Roll(Roll_Difference, Roll_Rate_Of_Change):
-
     if (Roll_Difference < 0.0000):
-        Soothing_rate = 0.000050
-        Exponential_Rate = 2.5
+        Soothing_rate = 0.000075
+        Exponential_Rate = 1.5
         Roll_Command = Soothing_rate * (abs(Roll_Difference) ** Exponential_Rate)
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.roll = Roll_Command
     
     elif (-0.0010 < Roll_Difference):
-        Soothing_rate = 0.000125
-        Exponential_Rate = 2.5
+        Soothing_rate = 0.000150
+        Exponential_Rate = 1.5
         Roll_Command = Soothing_rate * (abs(Roll_Difference) ** Exponential_Rate)
         Roll_Command = max(-1, min(1, Roll_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.roll = +Roll_Command
+    if(Roll_Rate_Of_Change > 0.0001):
+        ROCR_Positiv(Roll_Rate_Of_Change);
 
 def Phase_two_positive_yaw(Yaw_Difference):
     if (0.00005 < Yaw_Difference):
@@ -139,7 +151,25 @@ def  Phase_Two_Negative_Yaw(Yaw_Difference):
         Yaw_command = Soothing_rate * (abs(Yaw_Difference ** Exponential_Rate))
         Yaw_command = max(-1, min(1, Yaw_command))  # Ensure yaw command is between -1 and 1
         vessel.control.yaw = -Yaw_command
-
+        
+def ROCR_Positiv(Rate_of_Change_Roll):
+    if(Rate_of_Change_Roll > 0.0001):
+        #Calculate Rate of change Difference;
+        Degree_Per_second_Difference = Degree_per_second_Target - Rate_of_Change_Roll
+        soothing_Rate = 0.002
+        Exponential = 2
+        Roll_Command = soothing_Rate * (abs(Roll_Difference ** Exponential))
+        Roll_Command = max(-1, min(1, Roll_Command))
+        vessel.controll.roll = Roll_Command
+        
+def ROCR_Negative(Rate_of_Change_Roll):
+    if(Rate_of_Change_Roll > 0.0001):
+        Degree_Per_second_Difference = Degree_per_second_Target - Rate_of_Change_Roll
+        soothing_Rate = 0.002
+        Exponential = 2
+        Roll_Command = soothing_Rate * (abs(Roll_Difference ** Exponential))
+        Roll_Command = max(-1, min(1, Roll_Command))
+        vessel.controll.roll = -Roll_Command
 # get Mu
 mu = 3.5316e12
 Radius = 600000
@@ -260,7 +290,7 @@ while checker == True:
 
     # Calculate Heading Difference
     Heading_Difference = Vessel_Heading - Heading_Target
-    
+
     Roll_Difference = Vessel_Roll - Roll_Target
 
     degrees_per_Seconds_Roll = Rate_of_Change_Roll(Vessel_Roll, previous_vessel_roll, elapsed_time)
@@ -282,9 +312,7 @@ while checker == True:
 
             elif (Yaw_Difference > 0.00):
                 Phase_One_Positive_Yaw (Yaw_Difference)
-                
-                
-
+    
             if(vessel.flight().pitch < 89):
                 if (Heading_Difference < 0.00):
                     Positive_Pitch(Heading_Difference, Degrees_per_second_pitch)
@@ -297,7 +325,7 @@ while checker == True:
                 elif (Roll_Difference > 0.000):
                     Negative_Roll(Roll_Difference, degrees_per_Seconds_Roll)
 
-            print(f"Target Degree: {Target_degree:.5f} | Vessels Pitch: {vessel.flight().pitch:.5f} | Target Difference: {Yaw_Difference:.5f} | Yaw Control: {vessel.control.yaw:.5f} | Vessel Heading {Vessel_Heading:.5f} | Target Heading: {Heading_Target:.5f} | Heading Difference: {Heading_Difference:.5f} | Pitch Control: {vessel.control.pitch:.5f} | Roll Diference: {Roll_Difference:.5f} | Roll Command: {vessel.control.roll:.5f} | Rate of Change Roll: {degrees_per_Seconds_Roll:.8f} | Rate of Change pitch: {Degrees_per_second_pitch:.8f} | Vessel Height {vessel.flight().mean_altitude:.5f} | ")
+            print(f"Target Degree: {Target_degree:.5f} | Vessels Pitch: {vessel.flight().pitch:.5f} | Target Difference: {Yaw_Difference:.5f} | Yaw Control: {vessel.control.yaw:.5f} | Vessel Heading {Vessel_Heading:.5f} | Target Heading: {Heading_Target:.5f} | Heading Difference: {Heading_Difference:.5f} | Pitch Control: {vessel.control.pitch:.5f} | Roll Diference: {Roll_Difference:.5f} | Roll Command: {vessel.control.roll:.5f} | Rate of Change Roll: {degrees_per_Seconds_Roll:.8f} | Rate of Change pitch: {Degrees_per_second_pitch:.8f} | Vessel Height: {vessel.flight().mean_altitude:.5f} | ")
 
     elif(height_threshold_1 < height < height_threhsold_2):
 
