@@ -60,22 +60,44 @@ def Phase_One_Positive_Yaw (Yaw_Difference):
         vessel.control.yaw = Yaw_command
 
 def Positive_Pitch(Heading_Difference, Heading_Rate_Of_Change):
-        
-    if (Heading_Difference < -0.0001):
-        Soothing_rate = 0.0007
-        Exponential_Rate = 2
+    if (Heading_Difference <= -0.05):
+        if(Heading_Difference > -0.05):
+            if(Heading_Rate_Of_Change > 0.00005):
+                Soothing_rate = 0.0004
+                Exponential_Rate = 3
+                Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
+                Pitch_Command = max(-1, min (1, Pitch_Command))
+                vessel.control.pitch = Pitch_Command
+            Soothing_rate = 0.0009
+            Exponential_Rate = 3
+            Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
+            Pitch_Command = max(-1, min(1, Pitch_Command))
+            vessel.control.pitch = -Pitch_Command
+        Soothing_rate = 0.001
+        Exponential_Rate = 3
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.pitch = Pitch_Command # positive pitch for negative Heading difference# positive pitch for negative Heading difference
-        
 def Negative_Pitch(Heading_Difference, Heading_Rate_Of_Change):
 
-    if (0.0005 < Heading_Difference ):
-        Soothing_rate = 0.0006
-        Exponential_Rate = 2
+    if (0.05 <= Heading_Difference ):
+        Soothing_rate = 0.0009
+        Exponential_Rate = 3
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.pitch = -Pitch_Command # negative pitch for positive Heading difference
+    if(Heading_Difference < 0.05 ):
+        if(Heading_Rate_Of_Change > 0.00005):
+            Soothing_rate = 0.001
+            Exponential_Rate = 3
+            Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
+            Pitch_Command = max(-1, min(1, Pitch_Command))
+            vessel.control.pitch = Pitch_Command
+        Soothing_rate = 0.00035
+        Exponential_Rate = 3;
+        Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
+        Pitch_Command = max(-1, min(1, Pitch_Command))
+        vessel.control.pitch = -Pitch_Command
 
 def Negative_Roll (Roll_Difference, Roll_Rate_Of_Change):
 
@@ -267,7 +289,8 @@ def main():
                     elif (Roll_Difference > 0.0005):
                         Negative_Roll(Roll_Difference, degrees_per_Seconds_Roll)
 
-                print(f"Target Degree: {Target_degree:.5f} | Vessels Pitch: {vessel.flight().pitch:.7f} | Target Difference: {Yaw_Difference:.5f} | Yaw Control: {vessel.control.yaw:.5f} | Vessel Heading {Vessel_Heading:.5f} | Target Heading: {Heading_Target:.5f} | Heading Difference: {Heading_Difference:.5f} | Pitch Control: {vessel.control.pitch:.5f} | Roll Diference: {Roll_Difference:.5f} | Roll Command: {vessel.control.roll:.5f} | Rate of Change Roll: {degrees_per_Seconds_Roll:.8f} | Rate of Change pitch: {Degrees_per_second_pitch:.8f} | Vessel Height: {vessel.flight().mean_altitude:.5f} | ")
+
+                print(f"Target Degree: {Target_degree:.5f} | Vessels Pitch: {vessel.flight().pitch:.5f} | Target Difference: {Yaw_Difference:.5f} | Yaw Control: {vessel.control.yaw:.5f} | Vessel Heading {Vessel_Heading:.5f} | Target Heading: {Heading_Target:.5f} | Heading Difference: {Heading_Difference:.5f} | Pitch Control: {vessel.control.pitch:.10f} | Roll Diference: {Roll_Difference:.5f} | Roll Command: {vessel.control.roll:.5f} | Rate of Change Roll: {degrees_per_Seconds_Roll:.8f} | Rate of Change pitch: {Degrees_per_second_pitch:.8f} | Vessel Height: {vessel.flight().mean_altitude:.5f} | ")
 
         elif(height_threshold_1 < height < height_threhsold_2):
 
@@ -292,7 +315,7 @@ def main():
             elif (Roll_Difference > 0.0005):
                 Negative_Roll(Roll_Difference, degrees_per_Seconds_Roll)
 
-            print(f"Target Degree: {Target_degree:.5f} | Vessels Pitch: {vessel.flight().pitch:.5f} | Target Difference: {Yaw_Difference:.5f} | Yaw Control: {vessel.control.yaw:.5f} | Vessel Heading {Vessel_Heading:.5f} | Target Heading: {Heading_Target:.5f} | Heading Difference: {Heading_Difference:.5f} | Pitch Control: {vessel.control.pitch:.5f} | Roll Diference: {Roll_Difference:.5f} | Roll Command: {vessel.control.roll:.5f} | Rate of Change Roll: {degrees_per_Seconds_Roll:.8f} | Rate of Change pitch: {Degrees_per_second_pitch:.6f} | Vessel Height {vessel.flight().mean_altitude:.5f} | ")
+            print(f"Target Degree: {Target_degree:.5f} | Vessels Pitch: {vessel.flight().pitch:.5f} | Target Difference: {Yaw_Difference:.5f} | Yaw Control: {vessel.control.yaw:.5f} | Vessel Heading {Vessel_Heading:.5f} | Target Heading: {Heading_Target:.5f} | Heading Difference: {Heading_Difference:.5f} | Pitch Control: {vessel.control.pitch:.10f} | Roll Diference: {Roll_Difference:.5f} | Roll Command: {vessel.control.roll:.5f} | Rate of Change Roll: {degrees_per_Seconds_Roll:.8f} | Rate of Change pitch: {Degrees_per_second_pitch:.6f} | Vessel Height {vessel.flight().mean_altitude:.5f} | ")
 
         elif (height_threhsold_2 < height < height_threhsold_3):
             Target_degree = smooth_transition(height, height_threhsold_2, height_threhsold_3, Degree_Target_for_20000m, Degree_Target_for_40000m)
@@ -317,13 +340,14 @@ def main():
             elif (Roll_Difference > 0.0005):
                 Negative_Roll(Roll_Difference, degrees_per_Seconds_Roll)
 
-            print(f"Target Degree: {Target_degree:.5f} | Vessels Pitch: {vessel.flight().pitch:.5f} | Target Difference: {Yaw_Difference:.5f} | Yaw Control: {vessel.control.yaw:.5f} | Vessel Heading {Vessel_Heading:.5f} | Target Heading: {Heading_Target:.5f} | Heading Difference: {Heading_Difference:.5f} | Pitch Control: {vessel.control.pitch:.5f} | Roll Diference: {Roll_Difference:.5f} | Roll Command: {vessel.control.roll:.5f} | Rate of Change Roll: {degrees_per_Seconds_Roll:.8f} | Rate of Change pitch: {Degrees_per_second_pitch:.6f} | Vessel Height {vessel.flight().mean_altitude:.5f} | ")
+            print(f"Target Degree: {Target_degree:.5f} | Vessels Pitch: {vessel.flight().pitch:.5f} | Target Difference: {Yaw_Difference:.5f} | Yaw Control: {vessel.control.yaw:.5f} | Vessel Heading {Vessel_Heading:.5f} | Target Heading: {Heading_Target:.5f} | Heading Difference: {Heading_Difference:.5f} | Pitch Control: {vessel.control.pitch:.10f} | Roll Diference: {Roll_Difference:.5f} | Roll Command: {vessel.control.roll:.5f} | Rate of Change Roll: {degrees_per_Seconds_Roll:.8f} | Rate of Change pitch: {Degrees_per_second_pitch:.6f} | Vessel Height {vessel.flight().mean_altitude:.5f} | ")
 
         if(height >= 12000):
             vessel.control.rcs = True
+        if(height > 40000):
+            break
 
     time.sleep(0.1)
-
 
 if __name__ == "__main__":
     print(__name__)
