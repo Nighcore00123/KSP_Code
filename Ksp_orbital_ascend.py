@@ -61,19 +61,13 @@ def Phase_One_Positive_Yaw (Yaw_Difference):
 
 def Positive_Pitch(Heading_Difference, Heading_Rate_Of_Change):
     if (Heading_Difference <= -0.05):
-        if(Heading_Difference > -0.05):
-            if(Heading_Rate_Of_Change > 0.00005):
-                Soothing_rate = 0.0004
-                Exponential_Rate = 3
-                Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
-                Pitch_Command = max(-1, min (1, Pitch_Command))
-                vessel.control.pitch = Pitch_Command
-            Soothing_rate = 0.0009
-            Exponential_Rate = 3
+        if(Heading_Rate_Of_Change > 0.0009 and Heading_Difference > -0.5):
+            Soothing_rate = 0.025
+            Exponential_Rate = 2
             Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
-            Pitch_Command = max(-1, min(1, Pitch_Command))
+            Pitch_Command = max(-1, min (1, Pitch_Command))
             vessel.control.pitch = -Pitch_Command
-        Soothing_rate = 0.001
+        Soothing_rate = 0.0018
         Exponential_Rate = 3
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
@@ -81,23 +75,17 @@ def Positive_Pitch(Heading_Difference, Heading_Rate_Of_Change):
 def Negative_Pitch(Heading_Difference, Heading_Rate_Of_Change):
 
     if (0.05 <= Heading_Difference ):
-        Soothing_rate = 0.0009
+        if(Heading_Rate_Of_Change > 0.0009 and Heading_Difference < 0.5):
+            Soothing_rate = 0.025
+            Exponential_Rate = 2
+            Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
+            Pitch_Command = max(-1, min(1, Pitch_Command))
+            vessel.control.pitch = Pitch_Command
+        Soothing_rate = 0.0020
         Exponential_Rate = 3
         Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
         Pitch_Command = max(-1, min(1, Pitch_Command))  # Ensure pitch command is between -1 and 1
         vessel.control.pitch = -Pitch_Command # negative pitch for positive Heading difference
-    if(Heading_Difference < 0.05 ):
-        if(Heading_Rate_Of_Change > 0.00005):
-            Soothing_rate = 0.001
-            Exponential_Rate = 3
-            Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
-            Pitch_Command = max(-1, min(1, Pitch_Command))
-            vessel.control.pitch = Pitch_Command
-        Soothing_rate = 0.00035
-        Exponential_Rate = 3;
-        Pitch_Command = Soothing_rate * (abs(Heading_Difference) ** Exponential_Rate)
-        Pitch_Command = max(-1, min(1, Pitch_Command))
-        vessel.control.pitch = -Pitch_Command
 
 def Negative_Roll (Roll_Difference, Roll_Rate_Of_Change):
 
@@ -204,7 +192,7 @@ def main():
 
         # Get the current velocity of the vessel as a tuple
         current_velocity_tuple = vessel.flight().velocity
-            
+
         # Calculate the magnitude of the velocity vector
         current_velocity = math.sqrt(current_velocity_tuple[0]**2 + current_velocity_tuple[1]**2 + current_velocity_tuple[2]**2)
 
