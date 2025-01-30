@@ -27,21 +27,23 @@ def smooth_transition(current_height, threshold_1, threshold_2, degree_1, degree
         # Linearly interpolate between degree_1 and degree_2
         factor = (current_height - threshold_1) / (threshold_2 - threshold_1)
         return degree_1 + factor * (degree_2 - degree_1)
-
 # noinspection DuplicatedCode
 def pitch_pid (kp, ki, kd, pitch_target, current_time, previous_time, previous_error, initial_integral_value, max_integral):
     passed_time = current_time - previous_time
     pitch_error = pitch_target - vessel.flight().pitch
 
     proportional_calculation = kp * pitch_error
-    if vessel.flight().pitch == 0.00:
+    if pitch_error == 0.0000:
         initial_integral_value = 0
     else:
         initial_integral_value += pitch_error * passed_time
 
     initial_integral_value = max(-max_integral, min(max_integral, initial_integral_value))
     integral_calculation = ki * initial_integral_value
-    derivative_calculation = kd * (pitch_error - previous_error) / passed_time
+    if passed_time > 1:
+        derivative_calculation = kd * (pitch_error - previous_error) / passed_time
+    else:
+        derivative_calculation = 0
 
     PID_output = proportional_calculation + integral_calculation + derivative_calculation
     pitch_output = max(-1, min(1, PID_output))
@@ -50,8 +52,6 @@ def pitch_pid (kp, ki, kd, pitch_target, current_time, previous_time, previous_e
     vessel.control.yaw = -pitch_output
 
     return current_time, pitch_error, initial_integral_value
-
-
 # noinspection DuplicatedCode
 def roll_pid(kp, ki, kd, roll_target, current_time, previous_time, previous_error, initial_integral_value, max_integral):
     passed_time = current_time - previous_time
@@ -59,7 +59,7 @@ def roll_pid(kp, ki, kd, roll_target, current_time, previous_time, previous_erro
 
 
     proportional_calculation = kp * roll_error
-    if vessel.flight().roll == 0.00:
+    if roll_error == 0.0000:
         initial_integral_value = 0
     else:
         initial_integral_value += roll_error * passed_time
@@ -77,8 +77,6 @@ def roll_pid(kp, ki, kd, roll_target, current_time, previous_time, previous_erro
     vessel.control.roll = roll_output
 
     return current_time, roll_error, initial_integral_value
-
-
 # noinspection DuplicatedCode
 def heading_pid(kp, ki, kd, heading_target, current_time, previous_time, previous_error, initial_integral_value, max_integral):
     passed_time = current_time - previous_time
@@ -86,7 +84,7 @@ def heading_pid(kp, ki, kd, heading_target, current_time, previous_time, previou
 
     proportional_Calculation = kp * heading_error
 
-    if vessel.flight().heading == 0.00:
+    if heading_error == 0.0000:
         initial_integral_value = 0
     else:
             initial_integral_value += heading_error * passed_time
@@ -94,7 +92,10 @@ def heading_pid(kp, ki, kd, heading_target, current_time, previous_time, previou
     initial_integral_value = max(-max_integral, min(max_integral, initial_integral_value))
     integral_calculation = ki * initial_integral_value
 
-    derivative_calculation = kd * (heading_error - previous_error) / passed_time
+    if passed_time > 2:
+        derivative_calculation = kd * (heading_error - previous_error) / passed_time
+    else:
+        derivative_calculation = 0
 
     PID_output = proportional_Calculation + integral_calculation + derivative_calculation
     yaw_output = max(-1, min(1, PID_output))
@@ -133,12 +134,12 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
     # current ki = 0.0000075
     # current kd = 0.00000888
 
-    heading_kp = 0.015
+    heading_kp = 0.01
     heading_ki = 0.000000005
-    heading_kd = 0.00000044
+    heading_kd = 0.0000055
 
     heading_initial_integral_value = 0
-    heading_previous_time = time.perf_counter()
+
 
 
     # --------------Pitch PID Controller Variables
@@ -155,7 +156,7 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
     pitch_kd = 0.000088
 
     pitch_initial_integral_value = 0
-    pitch_previous_time = time.perf_counter()
+
 
 
     # ---------------Roll PID Controller Variables
@@ -181,24 +182,22 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
     heading_Target = 90.000# target heading  aka my set point for pitch
     roll_Target = 90.000  # target roll  aka my set point for roll
 
-    degree_Target_for_10000m = 60
-    degree_Target_for_20000m = 50
-    degree_Target_for_40000m = 30
-    degree_Target_for_75000m = 10
+    degree_Target_for_10000m = 50
+    degree_Target_for_20000m = 40
+    degree_Target_for_40000m = 20
+    degree_Target_for_75000m = 0
 
     height_threshold_1 = 10000
     height_threshold_2 = 20000
     height_threshold_3 = 40000
     height_threshold_4 = 70000
 
-    max_integral = 20
+    max_integral = 0.05
 
     previous_vessel_thrust = vessel.available_thrust / vessel.mass
 
     while checker:
         vessel_height = vessel.flight().mean_altitude
-        heading_current_time = time.perf_counter()
-        pitch_current_time = time.perf_counter()
         roll_current_time = time.perf_counter()
         pitch_target_degree = calculate_target_degree(vessel_height, height_threshold_1, degree_Target_for_10000m)
 
@@ -219,8 +218,8 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
                                                                                                         pitch_ki,
                                                                                                         pitch_kd,
                                                                                                         pitch_target_degree,
-                                                                                                        pitch_current_time,
-                                                                                                        pitch_previous_time,
+                                                                                                        roll_current_time,
+                                                                                                        roll_previous_time,
                                                                                                         pitch_previous_error,
                                                                                                         pitch_initial_integral_value,
                                                                                                         max_integral)
@@ -230,8 +229,8 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
                     heading_previous_time, heading_previous_error, heading_initial_integral_value = heading_pid(heading_kp,heading_ki,
                                                                                                                     heading_kd,
                                                                                                                     heading_Target,
-                                                                                                                    heading_current_time,
-                                                                                                                    heading_previous_time,
+                                                                                                                    roll_current_time,
+                                                                                                                    roll_previous_time,
                                                                                                                     heading_previous_error,
                                                                                                                     heading_initial_integral_value,
                                                                                                                     max_integral)
@@ -255,8 +254,8 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
             pitch_previous_time, pitch_previous_error, pitch_initial_integral_value = pitch_pid(pitch_kp, pitch_ki,
                                                                                                     pitch_kd,
                                                                                                     pitch_target_degree,
-                                                                                                    pitch_current_time,
-                                                                                                    pitch_previous_time,
+                                                                                                roll_current_time,
+                                                                                                roll_previous_time,
                                                                                                     pitch_previous_error,
                                                                                                     pitch_initial_integral_value,
                                                                                                     max_integral)
@@ -265,8 +264,8 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
                                                                                                             heading_ki,
                                                                                                             heading_kd,
                                                                                                             heading_Target,
-                                                                                                            heading_current_time,
-                                                                                                            heading_previous_time,
+                                                                                                        roll_current_time,
+                                                                                                        roll_previous_time,
                                                                                                             heading_previous_error,
                                                                                                             heading_initial_integral_value,
                                                                                                             max_integral)
@@ -288,8 +287,8 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
             pitch_previous_time, pitch_previous_error, pitch_initial_integral_value = pitch_pid(pitch_kp, pitch_ki,
                                                                                                     pitch_kd,
                                                                                                     pitch_target_degree,
-                                                                                                    pitch_current_time,
-                                                                                                    pitch_previous_time,
+                                                                                                roll_current_time,
+                                                                                                roll_previous_time,
                                                                                                     pitch_previous_error,
                                                                                                     pitch_initial_integral_value,
                                                                                                     max_integral)
@@ -298,8 +297,8 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
                                                                                                             heading_ki,
                                                                                                             heading_kd,
                                                                                                             heading_Target,
-                                                                                                            heading_current_time,
-                                                                                                            heading_previous_time,
+                                                                                                        roll_current_time,
+                                                                                                        roll_previous_time,
                                                                                                             heading_previous_error,
                                                                                                             heading_initial_integral_value,
                                                                                                             max_integral)
@@ -321,8 +320,8 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
             pitch_previous_time, pitch_previous_error, pitch_initial_integral_value = pitch_pid(pitch_kp, pitch_ki,
                                                                                                     pitch_kd,
                                                                                                     pitch_target_degree,
-                                                                                                    pitch_current_time,
-                                                                                                    pitch_previous_time,
+                                                                                                roll_current_time,
+                                                                                                roll_previous_time,
                                                                                                     pitch_previous_error,
                                                                                                     pitch_initial_integral_value,
                                                                                                     max_integral)
@@ -331,8 +330,8 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
                                                                                                             heading_ki,
                                                                                                             heading_kd,
                                                                                                             heading_Target,
-                                                                                                            heading_current_time,
-                                                                                                            heading_previous_time,
+                                                                                                        roll_current_time,
+                                                                                                        roll_previous_time,
                                                                                                             heading_previous_error,
                                                                                                             heading_initial_integral_value,
                                                                                                             max_integral)
@@ -347,6 +346,9 @@ def sub_orbital_phase(roll_previous_error, heading_previous_error, pitch_previou
                                                                                                 max_integral)
         if vessel.orbit.apoapsis_altitude >= 75000:
             vessel.control.throttle = 0
+
+        if vessel.orbit.apoapsis_altitude < 75000:
+            vessel.control.throttle = 1
 
         if vessel.orbit.apoapsis_altitude >= 75000 and vessel_height >= 70000:
             checker = False
@@ -439,7 +441,8 @@ def coasting_phase():
                                                                                                 roll_initial_integral_value,
                                                                                                 max_integral)
             if time_To_Apoapsis < half_burn_time:
-                return True
+                checker = True
+    return True
 
 
 
@@ -463,9 +466,9 @@ def main():
     while not launch_sequence_complete:
         launch_timer_end = time.perf_counter()
 
-        if launch_timer_end - launch_Timer_start >= 1:
-            print("Launching in: ", time_counter)
+        if launch_timer_end - launch_Timer_start >= 1 and time_counter != 0:
             time_counter -= 1
+            print("Launching in: ", time_counter)
 
             launch_Timer_start = time.perf_counter()
 
